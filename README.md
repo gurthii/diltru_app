@@ -1,6 +1,6 @@
-# Diltru - Is it trully a good deal?
+# Diltru - Is it truly a good deal?
 
-**An ecommerce site price tracker and alert app, like [PayPal Honey](joinhoney.com), where a user can check price history and get alerts on price drops of select products on a given Kenyan ecommerce site. The app initially focuses on [Jumia Kenya](https://www.jumia.co.ke/)**
+**An ecommerce site price tracker and alert app, like [Keepa](https://keepa.com/) or [CamelCamelCamel](https://camelcamelcamel.com/), where a user can check price history and get alerts on price drops of select products on a given Kenyan ecommerce site. The app initially focuses on [Jumia Kenya](https://www.jumia.co.ke/) ecommerce site.**
 
 ## Features
 - Price History and Tracker: Get a price chart and initiate a price tracker function.
