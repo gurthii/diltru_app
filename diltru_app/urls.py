@@ -19,5 +19,9 @@ from django.urls import include, path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # path("", include("new_appw.urls")),
+    path('api/', include('products.urls')), # directs all 'api/' requests to the products app
+    
+    # this adds a login button to DRF browsable API interface; 
+    # actual view for this would be /api/auth/login
+    path("api/auth/", include('rest_framework.urls')), 
 ]
