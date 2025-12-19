@@ -17,6 +17,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'owner_username', 
             'jumia_url', 
             'name', 
+            'sku',
             'current_price', 
             'created_at', 
             'last_updated'
@@ -27,6 +28,7 @@ class ProductSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'owner', # The owner should be set by the logged-in user, not sent in the request body.
             'name', 
+            'sku',
             'current_price', 
             'created_at', 
             'last_updated'

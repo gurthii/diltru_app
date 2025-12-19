@@ -12,6 +12,8 @@ class Product(models.Model):
         unique=True, # dupes won't be tracked
         help_text="Type the full url of the Jumia product e.g.,'https://www.jumia.co.ke/samsung-22-essential-monitor-s3-s30gd-full-hd-monitor-ls22d300gamxue-1yr-wrty-313823901.html'"
     )
+    # Product SKU
+    sku = models.CharField(max_length=100, blank=True, null=True)
 
     # Product data
     name = models.CharField(
@@ -33,6 +35,7 @@ class Product(models.Model):
     last_updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.name or 'Unknown Product Name'} ({self.owner.username})"
-    
+        product_name = self.name or 'Unknown Product Name'
+        product_sku = self.sku or 'No SKU'
+        return f"{product_name} - {product_sku} ({self.owner.username})"    
 

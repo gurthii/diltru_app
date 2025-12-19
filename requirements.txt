@@ -1,2 +1,3 @@
 djangorestframework
 Django==6.0
+beautifulsoup4 
