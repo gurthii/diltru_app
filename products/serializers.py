@@ -1,10 +1,19 @@
 from rest_framework import serializers
-from .models import Product
+from .models import Product, PriceHistory
+
+class PriceHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PriceHistory
+        fields = ['price', 'timestamp']
 
 class ProductSerializer(serializers.ModelSerializer):
     # We add 'owner_username' to display the username instead of just the owner's ID number, 
     # making the response more readable for the API user.
     owner_username = serializers.ReadOnlyField(source='owner.username')
+    
+    history = PriceHistorySerializer(many=True, read_only=True)
+    # since one product has many history entries, we specify many=True
+    # to prevent creation/update of history we limit it to read_only=True
 
     class Meta:
         # 1. Model: Tell the serializer which model to use.
@@ -20,7 +29,8 @@ class ProductSerializer(serializers.ModelSerializer):
             'sku',
             'current_price', 
             'created_at', 
-            'last_updated'
+            'last_updated',
+            'history'
         ]
 
         # 3. Read Only Fields: Fields that the user cannot set during creation (POST) or update (PUT/PATCH).
@@ -45,3 +55,5 @@ class ProductSerializer(serializers.ModelSerializer):
                     "The URL must be a valid Jumia Kenya product link (jumia.co.ke)."
                 )
             return value      
+        
+

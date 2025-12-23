@@ -1,3 +1,4 @@
 djangorestframework
 Django==6.0
-beautifulsoup4 
+beautifulsoup4
+django-cors-headers

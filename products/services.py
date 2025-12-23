@@ -10,7 +10,7 @@ def get_site_product(url): #"Returns dictionary with product name and price for 
     } # identifies my bot to the site as per their robots.txt
     
     try:
-        time.sleep(0.5) # to prevent exceedig 200 requests per minute limit
+        time.sleep(1) # to prevent exceedig 200 requests per minute limit
 
         response = requests.get(url, headers=headers, timeout=10)
 
@@ -32,9 +32,13 @@ def get_site_product(url): #"Returns dictionary with product name and price for 
             price = float(raw_price)
         else:
             price = 0.0
-        sku = None
-        sku_tag = soup.find("span", string="SKU").parent
-        sku = sku_tag.get_text(strip=True).replace("SKU:", "").strip()
+   
+        sku_tag = soup.find("span", string="SKU")
+        if sku_tag:
+            get_parent_element = sku_tag.parent
+            sku = get_parent_element.get_text(strip=True).replace("SKU:", "").strip()
+        else:
+            sku = None
 
         return {
             "name" : name,
