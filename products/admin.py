@@ -1,12 +1,21 @@
 from django.contrib import admin
-from .models import Product, PriceHistory, ScrapingLog
+from .models import Product, ProductTracker, PriceHistory, ScrapingLog
 
-# visualizing the Product and PriceHistory tables 
-# you can also delete entries in the table using Django Admin UI
-@admin.register(Product)  # admin.site.register(Product) # registered to allow use in admin interface
+@admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'sku', 'current_price', 'owner', 'last_updated')
-    search_fields = ('name', 'sku')
+    # REMOVED 'owner' from list_display
+    list_display = ('name', 'sku', 'current_price', 'last_updated', 'is_available')
+    
+    # This remains exactly the same as before - NO CHANGE NEEDED
+    search_fields = ('name', 'sku') 
+
+@admin.register(ProductTracker)
+class ProductTrackerAdmin(admin.ModelAdmin):
+    # This lets you see who is tracking what
+    list_display = ('owner', 'product', 'target_price', 'created_at')
+    
+    # NEW: Allows you to search by Username OR Product Name in the Tracker list
+    search_fields = ('owner__username', 'product__name', 'product__sku')
 
 @admin.register(PriceHistory)
 class PriceHistoryAdmin(admin.ModelAdmin):
