@@ -1,4 +1,5 @@
+django
 djangorestframework
-Django==6.0
+requests
 beautifulsoup4
 django-cors-headers
