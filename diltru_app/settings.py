@@ -130,3 +130,8 @@ STATIC_URL = 'static/'
 CORS_ALLOW_ALL_ORIGINS = True
 
 AUTH_USER_MODEL = 'users.CustomUser' # Django will use my custom model instead of the default
+
+# Redirect behaviour upon loginng in via browser - go to api root
+LOGIN_REDIRECT_URL = '/api/alerts/'
+LOGOUT_REDIRECT_URL = '/api/alerts/'
+
