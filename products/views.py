@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, mixins
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import Product, PriceAlert, PriceHistory, ScrapingLog
@@ -65,15 +65,19 @@ class PriceAlertViewSet(viewsets.ModelViewSet):
         response_serializer = self.get_serializer(alert)
         status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
         return Response(response_serializer.data, status=status_code)
-    
-class ProductViewSet(viewsets.ReadOnlyModelViewSet):
+
+class ProductViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """
-    Public endpoints for viewing products and their history.
-    No authentication required to view (AllowAny).
+    Public endpoints for viewing SPECIFIC products and their history.
+    
+    SECURITY CHANGE: 
+    We removed 'ListModelMixin' (inherited from ReadOnlyModelViewSet previously).
+    This means GET /api/products/ will now return 405 Method Not Allowed.
+    Users can no longer browse the global database.
     """
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [permissions.AllowAny] # Public access
+    permission_classes = [permissions.AllowAny]
 
     @action(detail=True, methods=['get'])
     def history(self, request, pk=None):
@@ -82,7 +86,6 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         Returns only the price history for charts.
         """
         product = self.get_object()
-        # Use the 'history' related_name from your models
         history_data = product.history.all().order_by('timestamp')
         serializer = PriceHistorySerializer(history_data, many=True)
         return Response(serializer.data)

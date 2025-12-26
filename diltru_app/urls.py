@@ -22,5 +22,6 @@ urlpatterns = [
 
     # my url structure
     path('api/', include('products.urls')),
-    path('api/auth/', include('rest_framework.urls')),
+    path('api/auth/', include('rest_framework.urls')), # takes care of log in/out
+    path('api/auth/', include('users.urls')), # for register
 ]

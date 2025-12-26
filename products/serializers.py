@@ -6,42 +6,43 @@ class PriceHistorySerializer(serializers.ModelSerializer):
         model = PriceHistory
         fields = ['price', 'timestamp']
 
+# what the user sees in their Dashboard.
+class ProductSummarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = [
+            'id', 
+            'name', 
+            'sku', 
+            'current_price', 
+            'is_available', 
+            'jumia_url' 
+        ]
+
+# Used only when clicking into a specific product page
 class ProductSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the shared Product model.
-    """
     history = PriceHistorySerializer(many=True, read_only=True)
 
     class Meta:
         model = Product
-        fields = [
-            'id', 'jumia_url', 'sku', 'name', 
-            'current_price', 'is_available', 
-            'last_updated', 'history'
-        ]
+        fields = '__all__'
 
 class PriceAlertSerializer(serializers.ModelSerializer):
-    """
-    The main serializer for the User Dashboard.
-    It links the 'owner' to the 'product' details.
-    """
-    # Nested Serialization: returns the full product object instead of just an ID
-    product = ProductSerializer(read_only=True)
+    # The user sees a clean product object, unaware of the complex history behind it.
+    product = ProductSummarySerializer(read_only=True)
     
-    # Write-only field to accept URL input during POST
     jumia_url = serializers.URLField(write_only=True)
 
     class Meta:
         model = PriceAlert
         fields = [
             'id', 
-            'product',      # The full nested product data
-            'jumia_url',    # Input only
+            'product',      
             'target_price', 
             'status', 
-            'created_at'
+            'jumia_url'    
         ]
-        read_only_fields = ['status', 'created_at']
+        read_only_fields = ['status'] 
 
     def validate_jumia_url(self, value):
         if 'jumia.co.ke' not in value.lower():
