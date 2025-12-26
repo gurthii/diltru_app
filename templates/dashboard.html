@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card bg-light sticky-top" style="top: 20px; z-index: 1;">
+            <div class="card-body">
+                <h5 class="card-title">Track New Item</h5>
+                <form id="add-alert-form">
+                    <div class="mb-3">
+                        <label>Jumia URL</label>
+                        <input type="url" id="jumia_url" class="form-control" placeholder="https://www.jumia.co.ke/..." required>
+                        <small class="text-muted">Paste the full product link.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label>Target Price (KSh)</label>
+                        <input type="number" id="target_price" class="form-control" placeholder="e.g. 45000" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id="track-btn">
+                        Start Tracking
+                    </button>
+                </form>
+                <div id="form-feedback" class="mt-2 text-danger"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3>My Tracked Items</h3>
+            <button onclick="loadAlerts()" class="btn btn-sm btn-outline-secondary">↻ Refresh</button>
+        </div>
+        
+        <div id="loading-spinner" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p>Loading your alerts...</p>
+        </div>
+        
+        <div id="alerts-container" class="row">
+            </div>
+    </div>
+</div>
+
+<div class="modal fade" id="historyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Price History</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <canvas id="priceChart" style="max-height: 400px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Target Price</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-alert-form">
+                    <input type="hidden" id="edit-alert-id">
+                    <div class="mb-3">
+                        <label class="form-label">Product</label>
+                        <input type="text" id="edit-product-name" class="form-control" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">New Target Price (KSh)</label>
+                        <input type="number" id="edit-target-price" class="form-control" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_URL = '/api/alerts/';
+    const PRODUCT_API = '/api/products/'; 
+    const token = localStorage.getItem('diltru_token');
+    
+    // Global Variables for Modals & Charts
+    let myChart = null; 
+    let historyModal = null;
+    let editModal = null;
+
+    // 1. Security Check
+    if (!token) window.location.href = '/login/';
+
+    // 2. Initialize on Page Load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadAlerts();
+        
+        // Init Bootstrap Modals
+        const histEl = document.getElementById('historyModal');
+        if (histEl) historyModal = new bootstrap.Modal(histEl);
+
+        const editEl = document.getElementById('editModal');
+        if (editEl) editModal = new bootstrap.Modal(editEl);
+    });
+
+    // 3. Fetch Data
+    async function loadAlerts() {
+        try {
+            const response = await fetch(API_URL, { headers: { 'Authorization': `Token ${token}` } });
+            
+            if (response.status === 401) { 
+                localStorage.removeItem('diltru_token');
+                window.location.href = '/login/';
+                return; 
+            }
+            
+            const alerts = await response.json();
+            renderAlerts(alerts);
+        } catch (error) { 
+            console.error("Load Error:", error); 
+        }
+    }
+
+    // 4. Render HTML Cards
+    function renderAlerts(alerts) {
+        const container = document.getElementById('alerts-container');
+        document.getElementById('loading-spinner').style.display = 'none';
+        container.innerHTML = '';
+
+        if (alerts.length === 0) {
+            container.innerHTML = `<div class="col-12"><div class="alert alert-info">You are not tracking any items yet. Add one on the left!</div></div>`;
+            return;
+        }
+
+        alerts.forEach(alert => {
+            const product = alert.product;
+            // Handle quotes in names for JS safety
+            const safeName = product.name.replace(/'/g, "\\'"); 
+            
+            // Color badges
+            let badgeClass = 'bg-primary'; // Active
+            if (alert.status === 'TRIGGERED') badgeClass = 'bg-success';
+            if (alert.status === 'PAUSED') badgeClass = 'bg-secondary';
+
+            const card = `
+                <div class="col-12 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <h5 class="card-title text-truncate" style="max-width: 65%;" title="${product.name}">
+                                    ${product.name}
+                                </h5>
+                                <span class="badge ${badgeClass}">${alert.status}</span>
+                            </div>
+                            
+                            <p class="card-text mt-2">
+                                <strong>Current:</strong> KSh ${product.current_price.toLocaleString()} <br>
+                                <strong>Target:</strong> KSh ${alert.target_price.toLocaleString()}
+                            </p>
+                            
+                            <div class="btn-group w-100 mt-2" role="group">
+                                <a href="${product.jumia_url}" target="_blank" class="btn btn-outline-secondary btn-sm">Jumia</a>
+                                
+                                <button onclick="openHistory(${product.id}, '${safeName}')" class="btn btn-outline-info btn-sm">
+                                    History
+                                </button>
+                                
+                                <button onclick="openEdit(${alert.id}, '${safeName}', ${alert.target_price})" class="btn btn-outline-warning btn-sm">
+                                    Edit
+                                </button>
+                                
+                                <button onclick="deleteAlert(${alert.id})" class="btn btn-outline-danger btn-sm">
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.innerHTML += card;
+        });
+    }
+
+    // 5. Handle "Add Tracker" Form
+    document.getElementById('add-alert-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('track-btn');
+        const feedback = document.getElementById('form-feedback');
+        
+        btn.disabled = true;
+        btn.textContent = "Processing...";
+        feedback.textContent = "";
+
+        const data = {
+            jumia_url: document.getElementById('jumia_url').value,
+            target_price: document.getElementById('target_price').value
+        };
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Token ${token}` },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                document.getElementById('add-alert-form').reset();
+                loadAlerts(); // Refresh list
+            } else {
+                const errData = await response.json();
+                feedback.textContent = "Error: " + (JSON.stringify(errData) || "Check URL");
+            }
+        } catch (error) {
+            feedback.textContent = "Network error.";
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "Start Tracking";
+        }
+    });
+
+    // 6. Handle "Delete"
+    async function deleteAlert(id) {
+        if(!confirm("Stop tracking this item?")) return;
+        try {
+            await fetch(`${API_URL}${id}/`, { 
+                method: 'DELETE', 
+                headers: { 'Authorization': `Token ${token}` } 
+            });
+            loadAlerts();
+        } catch (error) { alert("Failed to delete."); }
+    }
+
+    // 7. CHART LOGIC (Fixed)
+    async function openHistory(productId, productName) {
+        if (historyModal) historyModal.show();
+
+        // Destroy old chart to prevent "Canvas is already in use" error
+        if (myChart) {
+            myChart.destroy();
+            myChart = null;
+        }
+
+        try {
+            const response = await fetch(`${PRODUCT_API}${productId}/history/`);
+            const historyData = await response.json();
+
+            const labels = historyData.map(d => new Date(d.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }));
+            const prices = historyData.map(d => d.price);
+
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `Price History: ${productName}`,
+                        data: prices,
+                        borderColor: '#ff9900',
+                        backgroundColor: 'rgba(255, 153, 0, 0.1)',
+                        tension: 0.2,
+                        fill: true
+                    }]
+                },
+                options: { responsive: true }
+            });
+
+        } catch (error) { console.error("Chart error", error); }
+    }
+
+    // 8. EDIT LOGIC
+    function openEdit(alertId, productName, currentTarget) {
+        document.getElementById('edit-alert-id').value = alertId;
+        document.getElementById('edit-product-name').value = productName;
+        document.getElementById('edit-target-price').value = currentTarget;
+        if (editModal) editModal.show();
+    }
+
+    document.getElementById('edit-alert-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const id = document.getElementById('edit-alert-id').value;
+        const newPrice = document.getElementById('edit-target-price').value;
+
+        try {
+            const response = await fetch(`${API_URL}${id}/`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Token ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ target_price: newPrice })
+            });
+
+            if (response.ok) {
+                editModal.hide();
+                loadAlerts();
+            } else {
+                alert("Failed to update.");
+            }
+        } catch (error) { console.error(error); }
+    });
+</script>
+{% endblock %}

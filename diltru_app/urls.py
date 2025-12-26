@@ -1,27 +1,20 @@
-"""
-URL configuration for diltru_app project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path, include
-
+from django.views.generic import TemplateView
+from rest_framework.authtoken.views import obtain_auth_token # <--- Import this
+from users.views import CustomLoginView
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    # my url structure
+    # API routes
     path('api/', include('products.urls')),
-    path('api/auth/', include('rest_framework.urls')), # takes care of log in/out
-    path('api/auth/', include('users.urls')), # for register
+    path('api/auth/register/', include('users.urls')), # custom user registration
+    path('api/auth/login/', CustomLoginView.as_view(), name='api_token_auth'), # issues a JSON token when POST username/password
+
+
+    # Frontend routes
+    path('', TemplateView.as_view(template_name='home.html'), name='home'),
+    path('login/', TemplateView.as_view(template_name='login.html'), name='login'),
+    path('register/', TemplateView.as_view(template_name='register.html'), name='register'),
+    path('dashboard/', TemplateView.as_view(template_name='dashboard.html'), name='dashboard'),
 ]

@@ -86,13 +86,13 @@ class Command(BaseCommand):
             print(f"\n[EMAIL SIMULATION] To: {user.email} | Subject: {subject}\n")
             
             # Uncomment this when you configure SMTP settings in settings.py
-            # send_mail(
-            #     subject,
-            #     message,
-            #     settings.DEFAULT_FROM_EMAIL,
-            #     [user.email],
-            #     fail_silently=False,
-            # )
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+            )
             
             # 2. Update Alert State
             # We set it to TRIGGERED so we don't spam the user every hour

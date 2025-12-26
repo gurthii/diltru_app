@@ -3,3 +3,4 @@ djangorestframework
 requests
 beautifulsoup4
 django-cors-headers
+schedule # sequential automatio, consider redis/celery in the future

@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h3 class="text-center mb-4">Login</h3>
+                
+                <div id="error-msg" class="alert alert-danger d-none"></div>
+
+                <form id="login-form">
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input type="text" name="username" class="form-control" required autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id="login-btn">
+                        Sign In
+                    </button>
+                </form>
+                
+                <div class="mt-3 text-center">
+                    <small>No account? <a href="/register/">Register here</a></small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. AUTO-REDIRECT: If already logged in, go to dashboard
+    if (localStorage.getItem('diltru_token')) {
+        window.location.href = '/dashboard/';
+    }
+
+    // 2. FORM HANDLER
+    const form = document.getElementById('login-form');
+    
+    if (form) {
+        form.addEventListener('submit', async function(e) {
+            // CRITICAL: Stop the browser from reloading the page
+            e.preventDefault(); 
+            
+            const errorDiv = document.getElementById('error-msg');
+            const btn = document.getElementById('login-btn');
+            
+            // Clear previous errors and disable button
+            errorDiv.classList.add('d-none');
+            errorDiv.textContent = "";
+            btn.disabled = true;
+            btn.textContent = "Signing in...";
+
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch('/api/auth/login/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // SUCCESS: Save Token AND Username
+                    localStorage.setItem('diltru_token', data.token);
+                    // Use 'username' if sent by backend, or fallback to input
+                    const user = data.username || formData.get('username');
+                    localStorage.setItem('diltru_username', user); 
+                    
+                    window.location.href = '/dashboard/';
+                } else {
+                    // ERROR: Show message
+                    btn.disabled = false;
+                    btn.textContent = "Sign In";
+                    
+                    // Handle different error formats
+                    let msg = "Invalid credentials";
+                    if (data.non_field_errors) msg = data.non_field_errors[0];
+                    if (data.detail) msg = data.detail;
+                    
+                    errorDiv.textContent = msg;
+                    errorDiv.classList.remove('d-none');
+                }
+            } catch (err) {
+                console.error('Login Error:', err);
+                btn.disabled = false;
+                btn.textContent = "Sign In";
+                errorDiv.textContent = "Network error. Please check your connection.";
+                errorDiv.classList.remove('d-none');
+            }
+        });
+    } else {
+        console.error("Login form not found! Check your HTML ID.");
+    }
+</script>
+{% endblock %}

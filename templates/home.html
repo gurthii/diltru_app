@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="text-center py-5">
+    <h1 class="display-4">Track Prices. Save Money.</h1>
+    <p class="lead">The smartest way to shop on Jumia Kenya.</p>
+    
+    <div class="mt-4" id="home-actions">
+        <a href="/login/" class="btn btn-primary btn-lg">Loading...</a>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    const storedToken = localStorage.getItem('diltru_token');
+    const storedUser = localStorage.getItem('diltru_username'); // <--- Get the name
+    const actionDiv = document.getElementById('home-actions');
+
+    if (storedToken) {
+        // USER IS LOGGED IN
+        // We use 'storedUser' if available, otherwise fallback to 'User'
+        const nameToDisplay = storedUser ? storedUser : "User";
+        
+        actionDiv.innerHTML = `
+            <p class="text-success fs-4">Welcome back, <strong>${nameToDisplay}</strong>!</p>
+            <a href="/dashboard/" class="btn btn-success btn-lg">Go to Dashboard</a>
+        `;
+    } else {
+        // USER IS LOGGED OUT
+        actionDiv.innerHTML = `
+            <p>Already have an account?</p>
+            <a href="/login/" class="btn btn-primary btn-lg">Login to Start</a>
+        `;
+    }
+</script>
+{% endblock %}
+{% endblock %}

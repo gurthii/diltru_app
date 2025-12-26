@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="text-center mb-4">Create Account</h3>
+                
+                <div id="error-msg" class="alert alert-danger d-none"></div>
+
+                <form id="register-form">
+                    <div class="mb-3">
+                        <label>Username</label>
+                        <input type="text" name="username" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Email</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Password</label>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-warning w-100">Register</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    if (localStorage.getItem('diltru_token')) {
+        window.location.href = '/dashboard/';
+    }
+    document.getElementById('register-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Convert FormData to JSON (User Serializer expects JSON)
+        const formData = new FormData(this);
+        const jsonData = Object.fromEntries(formData.entries());
+
+        const errorDiv = document.getElementById('error-msg');
+        
+        try {
+            const response = await fetch('/api/auth/register/register/', { // Note the URL
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(jsonData)
+            });
+
+            if (response.ok) {
+                alert("Account created! Please login.");
+                window.location.href = '/login/';
+            } else {
+                const data = await response.json();
+                errorDiv.textContent = JSON.stringify(data);
+                errorDiv.classList.remove('d-none');
+            }
+        } catch (err) {
+            console.error('Error:', err);
+        }
+    });
+</script>
+{% endblock %}

@@ -50,7 +50,8 @@ def get_site_product(url):
         return {
             "name": name,
             "price": price,
-            "sku": sku
+            "sku": sku,
+            'is_available': True
         }
     
     except Exception as e:

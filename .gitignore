@@ -1,0 +1,33 @@
+# --- Security ---
+.env
+.env.local
+secrets.json
+
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.diltruenviron/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# --- Django ---
+# db.sqlite3 # left in for demo tests/review
+# db.sqlite3-journal
+local_settings.py
+# If you have a media folder for user uploads, ignore the files but keep the folder
+media/
+staticfiles/
+
+# --- IDEs / Editors (Optional but recommended) ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+*.log
