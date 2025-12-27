@@ -1,0 +1,1 @@
+web: gunicorn diltru_app.wsgi

@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings  # Best practice to refer to the custom user model
+from django.core.mail import send_mail
 
 class Product(models.Model):
     """
@@ -34,7 +35,7 @@ class Product(models.Model):
 class PriceAlert(models.Model):
     """
     The link between a User and a Product.
-    Replaces the old 'owner' field in Product.
+    Includes logic to auto-trigger emails on save.
     """
     STATUS_CHOICES = [
         ('ACTIVE', 'Active'),
@@ -43,7 +44,7 @@ class PriceAlert(models.Model):
     ]
 
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='alerts')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='alerts')
+    product = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='alerts')
     
     target_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ACTIVE')
@@ -57,6 +58,61 @@ class PriceAlert(models.Model):
 
     def __str__(self):
         return f"{self.owner.username} tracking {self.product.sku}"
+
+    def save(self, *args, **kwargs):
+        """
+        Overridden save method:
+        Checks price conditions every time the alert is saved/updated.
+        """
+        # 1. Ensure we have valid data to compare
+        if self.product.current_price is not None and self.target_price is not None:
+            
+            # 2. THE CHECK: Is current price lower than or equal to target?
+            if self.product.current_price <= self.target_price:
+                
+                # 3. Prevent duplicate emails: Only send if not already TRIGGERED
+                if self.status != 'TRIGGERED':
+                    self.status = 'TRIGGERED'
+                    print(f"🎯 Target Met! Sending email to {self.owner.email}")
+                    self.send_email_notification()
+            
+            # 4. Auto-Reset: If user updates target and it's no longer met, go back to ACTIVE
+            elif self.status == 'TRIGGERED':
+                 self.status = 'ACTIVE'
+
+        # 5. Save changes to DB
+        super().save(*args, **kwargs)
+
+    def send_email_notification(self):
+        """
+        Helper function to handle the email sending logic.
+        """
+        try:
+            formatted_price = f"{int(self.product.current_price):,d}"
+            formatted_target = f"{int(self.target_price):,d}"
+            
+            subject = f"🏷️ Price Drop Alert!: {self.product.name[:30]}... is KSh {formatted_price}!"
+            message = f"""
+Good news! 
+
+The item '{self.product.name}' you are tracking has dropped to KSh {formatted_price}.
+Your target was KSh {formatted_target}.
+
+Buy it now: {self.product.jumia_url}
+
+Happy Shopping,
+The DilTru Team 😀
+            """
+            
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [self.owner.email],
+                fail_silently=False, 
+            )
+        except Exception as e:
+            print(f"❌ Email Failed: {e}")
 
 class PriceHistory(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='history')
