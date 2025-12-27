@@ -1,4 +1,4 @@
-import threading
+import threading # should take care of timeouts
 from django.db import models
 from django.conf import settings
 from django.core.mail import send_mail
