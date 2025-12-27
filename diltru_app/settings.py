@@ -119,6 +119,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') # tells Django where to put files when 'collectstatic' is run going-live
+
+# applicable if there's global static folder for custom CSS/JS
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
 
 # for local testing
 CORS_ALLOW_ALL_ORIGINS = True
