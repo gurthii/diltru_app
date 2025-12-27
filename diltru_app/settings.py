@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken', # usable when dealing with js (front end UI for users)
     'corsheaders',
     'django_filters',
+    'drf_spectacular', # added Swagger for API documentation 
 
     # my apps
     'products',
@@ -143,6 +144,8 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,  # 10 items per page
+
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema', # for Swagger
 }
 
 # Email Configuration

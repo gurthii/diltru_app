@@ -1,7 +1,11 @@
+import logging
 import requests
 import time
 from bs4 import BeautifulSoup as bs
 from rest_framework.exceptions import ValidationError
+
+# Logger config
+logger = logging.getLogger(__name__)
 
 def get_site_product(url):
     """
@@ -19,7 +23,7 @@ def get_site_product(url):
         response = requests.get(url, headers=headers, timeout=10)
 
         if response.status_code == 403:
-            print("Error: Access denied by Jumia (403).")
+            logger.error(f"Access denied (403) for URL: {url}")
             return None
 
         response.raise_for_status()
@@ -72,5 +76,5 @@ def get_site_product(url):
         }
     
     except Exception as e:
-        print(f"Scraping Error: {e}")
+        logger.error(f"Scrapping failed for {url}: {str(e)}")
         return None

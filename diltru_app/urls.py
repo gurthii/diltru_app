@@ -3,6 +3,7 @@ from django.urls import path, include
 from django.views.generic import TemplateView
 from rest_framework.routers import DefaultRouter
 from users.views import CustomLoginView
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 # Import the ViewSets
 from products.views import PriceAlertViewSet, ProductViewSet, UserViewSet
@@ -38,4 +39,8 @@ urlpatterns = [
     path('login/', TemplateView.as_view(template_name='login.html'), name='login'),
     path('register/', TemplateView.as_view(template_name='register.html'), name='register'),
     path('dashboard/', TemplateView.as_view(template_name='dashboard.html'), name='dashboard'),
+
+    # 6. Documentation URLs
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
 ]
