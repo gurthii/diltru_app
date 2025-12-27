@@ -12,10 +12,15 @@ def get_site_product(url):
     Scrapes Jumia Kenya for product details.
     Returns a dict: {'name': str, 'price': float, 'sku': str} or None.
     """
+    # headers = {
+    #     "User-Agent": "Mozilla/5.0 (compatible; DiltruBot/1.0)",
+    #     "Accept-Language": "en-US,en;q=0.5",
+    # }
+
     headers = {
-        "User-Agent": "Mozilla/5.0 (compatible; DiltruBot/1.0)",
-        "Accept-Language": "en-US,en;q=0.5",
-    }
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    } # going-live
+
     
     try:
         # Rate limiting protection
