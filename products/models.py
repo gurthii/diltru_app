@@ -123,7 +123,7 @@ The DilTru Team 😀
                 )
                 print("✅ Email sent successfully!")
             except Exception as e:
-                print(f"❌ Email Failed in background: {e}")
+                print(f"‼️ Email Failed in background: {e}")
 
         # Fire and Forget: Start the thread
         email_thread = threading.Thread(target=_send_task)
