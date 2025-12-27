@@ -1,3 +1,4 @@
+import threading
 from django.db import models
 from django.conf import settings
 from django.core.mail import send_mail
@@ -91,36 +92,42 @@ class PriceAlert(models.Model):
 
     def send_email_notification(self):
         """
-        Helper function to handle the email sending logic.
-        WARNING: Do NOT call self.save() inside here to avoid recursion loops.
+        Sends email in a background thread so it doesn't freeze the website.
         """
-        try:
-            formatted_price = f"{int(self.product.current_price):,d}"
-            formatted_target = f"{int(self.target_price):,d}"
-            
-            subject = f"🏷️ Price Drop Alert!: {self.product.name[:30]}... is KSh {formatted_price}!"
-            message = f"""
+        # Define the task to run in the background
+        def _send_task():
+            try:
+                formatted_price = f"{int(self.product.current_price):,d}"
+                formatted_target = f"{int(self.target_price):,d}"
+                
+                subject = f"🏷️ Price Drop Alert!: {self.product.name[:30]}... is KSh {formatted_price}!"
+                message = f"""
 Good news! 
 
 The item '{self.product.name}' you are tracking has dropped to KSh {formatted_price}.
-
 Your target was KSh {formatted_target}.
 
 Buy it now: {self.product.jumia_url}
 
 Happy Shopping,
 The DilTru Team 😀
-            """
-            
-            send_mail(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [self.owner.email],
-                fail_silently=False, 
-            )
-        except Exception as e:
-            print(f"❌ Email Failed: {e}")
+                """
+                
+                print(f"📧 Connecting to Gmail to send to {self.owner.email}...")
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [self.owner.email],
+                    fail_silently=False, 
+                )
+                print("✅ Email sent successfully!")
+            except Exception as e:
+                print(f"❌ Email Failed in background: {e}")
+
+        # Fire and Forget: Start the thread
+        email_thread = threading.Thread(target=_send_task)
+        email_thread.start()
 
 class PriceHistory(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='history')
