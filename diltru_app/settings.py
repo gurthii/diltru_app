@@ -166,11 +166,27 @@ REST_FRAMEWORK = {
 }
 
 # Email Configuration
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587      # 465 
-EMAIL_USE_TLS = True  # False
-EMAIL_USE_SSL = False # True
-EMAIL_HOST_USER = os.getenv('EMAIL_USER')      
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_PASSWORD')
-DEFAULT_FROM_EMAIL = f'dilTru Alerts <{os.getenv("EMAIL_USER")}>'
+
+# Check if we are running on Render (Render automatically sets this variable)
+if os.getenv('RENDER'):
+    # In prod: Use Brevo API (Port 443) - Guaranteed Delivery 
+    INSTALLED_APPS += ['anymail']
+    EMAIL_BACKEND = "anymail.backends.sendinblue.EmailBackend"  # Note: Internal name is still 'sendinblue'
+    
+    ANYMAIL = {
+        "SENDINBLUE_API_KEY": os.getenv('BREVO_API_KEY'),
+    }
+    
+    # Must match your verified sender in Brevo
+    DEFAULT_FROM_EMAIL = os.getenv('EMAIL_USER') 
+
+else:
+    # Use Gmail SMTP (Port 587) for easy local testing
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'smtp.gmail.com'
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_USE_SSL = False
+    EMAIL_HOST_USER = os.getenv('EMAIL_USER')
+    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_PASSWORD')
+    DEFAULT_FROM_EMAIL = f'dilTru Alerts <{os.getenv("EMAIL_USER")}>'
