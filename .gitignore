@@ -16,8 +16,8 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # --- Django ---
-# db.sqlite3 # left in for demo tests/review
-# db.sqlite3-journal
+db.sqlite3
+db.sqlite3-journal
 local_settings.py
 # If you have a media folder for user uploads, ignore the files but keep the folder
 media/
