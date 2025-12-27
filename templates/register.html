@@ -43,7 +43,7 @@
         const errorDiv = document.getElementById('error-msg');
         
         try {
-            const response = await fetch('/api/auth/register/register/', { // Note the URL
+            const response = await fetch('/api/auth/register/', { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(jsonData)
