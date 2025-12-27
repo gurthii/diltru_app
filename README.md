@@ -104,9 +104,11 @@ Once your server is running, follow these steps to test the core functionality:
 
 7. **Running the Scraper**
 ```bash
-# To upddate prices manually (or set up as a Cron Job)
+# To update prices manually (or set up as a Cron Job)
 python manage.py update_prices
 ```
+> App currently has a scheduler runner `run_scheduler.py` meant to run in another terminal and updating to \*Render db .
+> If running locally, comment out `DATABASE_URL=your-external-db-url` in .env accordingly.
 
 ## <img src="./templates/icons/certificate.png" height="30"> License & Disclaimer
 

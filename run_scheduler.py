@@ -20,7 +20,7 @@ def job():
 
 # Schedule the job
 # schedule.every(1).minutes.do(job) # runs every 1 minute, update to '.hours.do(job)' for rate-limit compliance
-schedule.every(6).hours.do(job) # every 6 hours
+schedule.every(1).minutes.do(job) # every 6 hours
 print("::: Price Tracker Scheduler Started. :::")
 print("Press Ctrl+C to stop.")
 

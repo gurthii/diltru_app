@@ -1,6 +1,7 @@
 from django.db import models
-from django.conf import settings  # Best practice to refer to the custom user model
+from django.conf import settings
 from django.core.mail import send_mail
+from django.utils import timezone  # <--- Added this import for timestamps
 
 class Product(models.Model):
     """
@@ -61,8 +62,10 @@ class PriceAlert(models.Model):
 
     def save(self, *args, **kwargs):
         """
-        Overridden save method:
-        Checks price conditions every time the alert is saved/updated.
+        The Safe Logic:
+        1. Modify 'self' fields (status, notified_at).
+        2. Send the email (but DO NOT save inside the email function).
+        3. Call super().save() ONCE to write everything to the DB.
         """
         # 1. Ensure we have valid data to compare
         if self.product.current_price is not None and self.target_price is not None:
@@ -70,22 +73,26 @@ class PriceAlert(models.Model):
             # 2. THE CHECK: Is current price lower than or equal to target?
             if self.product.current_price <= self.target_price:
                 
-                # 3. Prevent duplicate emails: Only send if not already TRIGGERED
+                # 3. Only trigger if not already TRIGGERED (prevents duplicate emails)
                 if self.status != 'TRIGGERED':
                     self.status = 'TRIGGERED'
+                    self.notified_at = timezone.now() # <--- Update timestamp here in memory
+                    
                     print(f"🎯 Target Met! Sending email to {self.owner.email}")
-                    self.send_email_notification()
+                    self.send_email_notification() # <--- Send mail (Pure Action, no DB save)
             
             # 4. Auto-Reset: If user updates target and it's no longer met, go back to ACTIVE
             elif self.status == 'TRIGGERED':
                  self.status = 'ACTIVE'
+                 self.notified_at = None
 
-        # 5. Save changes to DB
+        # 5. The ONLY save to the database (Updates status, target, and notified_at all at once)
         super().save(*args, **kwargs)
 
     def send_email_notification(self):
         """
         Helper function to handle the email sending logic.
+        WARNING: Do NOT call self.save() inside here to avoid recursion loops.
         """
         try:
             formatted_price = f"{int(self.product.current_price):,d}"
@@ -96,6 +103,7 @@ class PriceAlert(models.Model):
 Good news! 
 
 The item '{self.product.name}' you are tracking has dropped to KSh {formatted_price}.
+
 Your target was KSh {formatted_target}.
 
 Buy it now: {self.product.jumia_url}
