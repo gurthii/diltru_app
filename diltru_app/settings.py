@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken', # usable when dealing with js (front end UI for users)
     'corsheaders',
+    'django_filters',
 
     # my apps
     'products',
@@ -127,14 +128,22 @@ AUTH_USER_MODEL = 'users.CustomUser' # Django will use my custom model instead o
 LOGIN_REDIRECT_URL = '/api/alerts/'
 LOGOUT_REDIRECT_URL = '/api/alerts/'
 
-# Session management
+# Session management and other settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',  # For your JS Frontend
+        'rest_framework.authentication.TokenAuthentication', # For your JS Frontend
         'rest_framework.authentication.SessionAuthentication', # Keep this for the Admin panel
     ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,  # 10 items per page
 }
-
 
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

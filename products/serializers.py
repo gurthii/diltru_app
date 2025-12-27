@@ -23,7 +23,7 @@ class ProductSummarySerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Product
-        fields = ['id', 'name', 'current_price', 'jumia_url', 'sku']
+        fields = ['id', 'name', 'current_price', 'jumia_url', 'sku', 'image_url']
 
 class ProductSerializer(serializers.ModelSerializer):
     """
@@ -88,7 +88,8 @@ class PriceAlertSerializer(serializers.ModelSerializer):
                 current_price=product_data['price'],
                 # Safe .get() prevents crash if key is missing
                 is_available=product_data.get('is_available', True),
-                sku=sku_value 
+                sku=sku_value,
+                image_url=product_data.get('image_url')
             )
             
             # Create first history point so chart isn't empty
@@ -107,7 +108,7 @@ class PriceAlertSerializer(serializers.ModelSerializer):
                 formatted_target_price = f"{int(user_target_price):,d}"
 
 
-                subject = f"Price Alert: {short_product_name} is now KSh {formatted_current_price}!"
+                subject = f"Price Alert: {short_product_name} is now at KSh {formatted_current_price}!"
                 message = f"""
 Good news! 
                 

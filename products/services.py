@@ -28,6 +28,22 @@ def get_site_product(url):
         # 1. Extract Name
         name_tag = soup.find('h1')
         name = name_tag.text.strip() if name_tag else "Unknown Product"
+        
+        # 1.1. Extract Image
+        # Jumia standard: <img class="-fw -fh" data-src="..." > 
+        # Sometimes it is just src, sometimes data-src (lazy loading)
+        image_url = None
+        img_tag = soup.find('img', class_="-fw") 
+        if img_tag:
+            image_url = img_tag.get('data-src') or img_tag.get('src')
+        
+        # Fallback: Try the first image in the gallery container
+        if not image_url:
+            gallery = soup.find('div', id='imgs')
+            if gallery:
+                first_img = gallery.find('img')
+                if first_img:
+                    image_url = first_img.get('data-src') or first_img.get('src')
 
         # 2. Extract Price (Jumia specific class)
         # Note: Jumia classes change often. If this breaks, we update this line.
@@ -51,7 +67,8 @@ def get_site_product(url):
             "name": name,
             "price": price,
             "sku": sku,
-            'is_available': True
+            "is_available": True,
+            "image_url" : image_url
         }
     
     except Exception as e:

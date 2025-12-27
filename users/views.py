@@ -1,9 +1,9 @@
-from rest_framework import generics, status
+from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
-from .serializers import UserRegistrationSerializer
+from .serializers import UserRegistrationSerializer, UserSerializer
 from django.contrib.auth import get_user_model
 
 class RegisterView(generics.CreateAPIView):
@@ -37,3 +37,15 @@ class CustomLoginView(ObtainAuthToken):
             'username': user.username,
             'email': user.email
         })
+    
+class ManageUserView(generics.RetrieveAPIView):
+    """
+    Endpoint: GET /api/users/me/
+    Purpose: Retrieves the profile details of the currently logged-in user.
+    """
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated] # Only logged-in users
+
+    def get_object(self):
+        # Returns the user making the request, not a user found by ID in the URL
+        return self.request.user
