@@ -1,1 +1,1 @@
-web: gunicorn diltru_app.wsgi
+web: gunicorn diltru_app.wsgi --log-file - --timeout 120

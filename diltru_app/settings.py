@@ -161,7 +161,9 @@ STATICFILES_DIRS = [
 ]
 
 # Enable WhiteNoise compression and caching
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage' # less CPU intensive
 
 # for local testing
 CORS_ALLOW_ALL_ORIGINS = True
