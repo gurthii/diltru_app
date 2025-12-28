@@ -80,18 +80,44 @@ TEMPLATES = [
 WSGI_APPLICATION = 'diltru_app.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+# Database Config
 
-# Uses Render's DATABASE_URL if available, otherwise falls back to local sqlite
 DATABASES = {
-    'default': dj_database_url.config(
-        default='sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite3'),
-        conn_max_age=600
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
+# Production (Render.com)
+# If running on the server, always use the internal Render DB.
+if os.getenv('RENDER'):
+    DATABASES['default'] = dj_database_url.config(conn_max_age=600)
 
+# 2. The Switch
+# When I run the scheduler locally, it forces USE_CLOUD_DB to true
+# meaning, Use Cloud DB (update prices to online db).
+elif os.getenv('USE_CLOUD_DB') == 'True':
+    DATABASES['default'] = dj_database_url.parse(os.getenv('CLOUD_DATABASE_URL'))
+    print("‼️  WARNING: Connected to Production Database (Render)!")
+
+# 3. Local (Laptop Website)
+# Otherwise -> Stay on Local SQLite (Safe Mode).
+else:
+    print("💻 Connected to Local Database (SQLite)")
+
+"""
+To effect migrations locally and to cloud
+Local:
+py manage.py makemigrations
+py manage.py migrate
+
+Production: temporarily switch USE_CLOUD_DB to True using PowerShell or manually edit .env; Important since scheduler runs locally to avoid 'missing column errors'
+
+$env:USE_CLOUD_DB="True"; py manage.py makemigrations
+py manage.py migrate
+
+"""
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 

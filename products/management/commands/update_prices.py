@@ -1,7 +1,5 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from django.core.mail import send_mail  # For emailing
-from django.conf import settings
 from products.models import Product, PriceHistory, PriceAlert, ScrapingLog
 from products.services import get_site_product
 import time
@@ -38,8 +36,7 @@ class Command(BaseCommand):
             product.last_updated = timezone.now()
             product.save()
 
-            # Record history only if price changed or it's been a while (optional optimization)
-            # For Capstone, let's record every successful scrape for a nice graph
+            # Record history
             PriceHistory.objects.create(product=product, price=new_price)
             
             ScrapingLog.objects.create(
@@ -57,50 +54,18 @@ class Command(BaseCommand):
             )
 
             for alert in triggered_alerts:
-                self.trigger_notification(alert, new_price)
+                self.stdout.write(f" -> Alert triggered for {alert.owner.username}")
+                
+                # REUSE THE LOGIC FROM MODELS.PY
+                # This uses the threading AND the existing email template defined in the model
+                alert.send_email_notification() 
+
+                # Update status to avoid spamming (until user resets it)
+                alert.status = 'TRIGGERED'
+                alert.notified_at = timezone.now()
+                alert.save(update_fields=['status', 'notified_at'])
 
             # Be polite to Jumia server
             time.sleep(2) 
 
         self.stdout.write(self.style.SUCCESS('Successfully updated all prices.'))
-
-    def trigger_notification(self, alert, new_price):
-        """
-        Sends an email and updates the alert status.
-        """
-        user = alert.owner
-        product = alert.product
-        
-        subject = f"Price Drop Alert! {product.name}"
-        message = (
-            f"Hello {user.username},\n\n"
-            f"Good news! The product you are tracking has dropped to KSh {new_price}.\n"
-            f"Your target was KSh {alert.target_price}.\n\n"
-            f"Buy it now: {product.jumia_url}\n\n"
-            f"Happy Shopping,\nThe dilTru Team"
-        )
-        
-        # 1. Send the Email (Console Backend for now)
-        try:
-            # We wrap this in try/except so email failures don't crash the scraper
-            print(f"\n[EMAIL SIMULATION] To: {user.email} | Subject: {subject}\n")
-            
-            # Uncomment this when you configure SMTP settings in settings.py
-            send_mail(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                fail_silently=False,
-            )
-            
-            # 2. Update Alert State
-            # We set it to TRIGGERED so we don't spam the user every hour
-            alert.status = 'TRIGGERED'
-            alert.notified_at = timezone.now()
-            alert.save()
-            
-            print(f" -> Alert triggered for {user.username}")
-
-        except Exception as e:
-            print(f"Error sending email to {user.email}: {e}")

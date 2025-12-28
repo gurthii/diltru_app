@@ -15,7 +15,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         # We use create_user() instead of create() because it handles password hashing automatically
         user = User.objects.create_user(
             username=validated_data['username'],
-            email=validated_data.get('email'),
+            email=validated_data['email'], # no get, as it is now mandatory
             phone_number=validated_data.get('phone_number'),
             password=validated_data['password']
         )
