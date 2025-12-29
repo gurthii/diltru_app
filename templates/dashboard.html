@@ -26,26 +26,41 @@
     </div>
 
     <div class="col-md-8">
-        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-            <h3>My Tracked Items</h3>
+        
+        <div class="row align-items-center mb-3 gy-2">
+            <div class="col-12 col-md-auto">
+                <h3 class="mb-0">My Tracked Items</h3>
+            </div>
             
-            <div class="d-flex gap-2">
-                <input type="text" id="search-input" class="form-control form-control-sm" placeholder="Search products..." style="width: 200px;">
-                
-                <select id="status-filter" class="form-select form-select-sm" style="width: 130px;">
-                    <option value="">All Status</option>
-                    <option value="ACTIVE">Active</option>
-                    <option value="TRIGGERED">Deals!</option>
-                    <option value="PAUSED">Paused</option>
-                </select>
+            <div class="col-12 col-md">
+                <div class="row g-2 justify-content-md-end">
+                    
+                    <div class="col-12 col-md">
+                        <input type="text" id="search-input" class="form-control form-control-sm" placeholder="Search products...">
+                    </div>
 
-                <select id="sort-filter" class="form-select form-select-sm" style="width: 150px;">
-                    <option value="-created_at">Newest First</option>
-                    <option value="target_price">Price: Low to High</option>
-                    <option value="-target_price">Price: High to Low</option>
-                </select>
-                
-                <button onclick="loadAlerts()" class="btn btn-sm btn-primary">Search</button>
+                    <div class="col-6 col-md-auto">
+                        <select id="status-filter" class="form-select form-select-sm">
+                            <option value="">All Status</option>
+                            <option value="ACTIVE">Active</option>
+                            <option value="TRIGGERED">Deals!</option>
+                            <option value="PAUSED">Paused</option>
+                        </select>
+                    </div>
+
+                    <div class="col-6 col-md-auto">
+                        <select id="sort-filter" class="form-select form-select-sm">
+                            <option value="-created_at">Newest First</option>
+                            <option value="target_price">Price: Low to High</option>
+                            <option value="-target_price">Price: High to Low</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-12 col-md-auto">
+                        <button onclick="loadAlerts()" class="btn btn-sm btn-primary w-100">Search</button>
+                    </div>
+
+                </div>
             </div>
         </div>
         
@@ -125,26 +140,18 @@
         if (editEl) editModal = new bootstrap.Modal(editEl);
     });
 
-    // 3. Fetch Data (Final Version with Search, Sort, & Filter)
+    // 3. Fetch Data (With Search, Sort, & Filter)
     async function loadAlerts() {
-        // 1. Get values from our new toolbar inputs
+        // 1. Get values from inputs
         const search = document.getElementById('search-input').value;
         const status = document.getElementById('status-filter').value;
         const sort = document.getElementById('sort-filter').value;
 
         // 2. Build the dynamic URL
-        // Base: /api/alerts/?ordering=...
         let url = `${API_URL}?ordering=${sort}`;
         
-        // Append Search if typed
-        if (search) {
-            url += `&search=${encodeURIComponent(search)}`;
-        }
-        
-        // Append Status Filter if selected
-        if (status) {
-            url += `&status=${status}`;
-        }
+        if (search) url += `&search=${encodeURIComponent(search)}`;
+        if (status) url += `&status=${status}`;
 
         try {
             const response = await fetch(url, { 
@@ -160,19 +167,16 @@
             
             const data = await response.json();
             
-            // PAGINATION HANDLING:
-            // API returns { results: [...], count: 5, next: ... }
-            // We only need the 'results' array for the loop.
-            // If data.results is undefined (empty list), fallback to empty array []
+            // Handle Pagination: API returns { results: [], ... }
             renderAlerts(data.results || []); 
             
         } catch (error) { 
             console.error("Load Error:", error);
-            // Optional: Show error to user in the container
             document.getElementById('alerts-container').innerHTML = 
                 `<div class="col-12 text-danger">Failed to load alerts. Please refresh.</div>`;
         }
     }
+
     // 4. Render HTML Cards
     function renderAlerts(alerts) {
         const container = document.getElementById('alerts-container');
@@ -186,15 +190,20 @@
 
         alerts.forEach(alert => {
             const product = alert.product;
-            // Handle quotes in names for JS safety
-            const safeName = product.name.replace(/'/g, "\\'"); 
+            
+            // --- FIX START: Sanitize Name for HTML Attributes ---
+            const safeName = product.name
+                .replace(/'/g, "\\'")     // Escape single quotes
+                .replace(/"/g, "&quot;")  // Escape double quotes
+                .replace(/\n/g, " ");     // Remove newlines
+            // --- FIX END ---
             
             // Color badges
             let badgeClass = 'bg-primary'; // Active
             if (alert.status === 'TRIGGERED') badgeClass = 'bg-success';
             if (alert.status === 'PAUSED') badgeClass = 'bg-secondary';
 
-            // IMAGE LOGIC: Use scraped URL or a generic fallback
+            // IMAGE LOGIC
             const imgUrl = product.image_url ? product.image_url : 'https://placehold.co/300x200?text=No+Image';
 
             const card = `
@@ -206,7 +215,7 @@
 
                         <div class="card-body border-top">
                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h5 class="card-title text-truncate" style="max-width: 65%; font-size: 1rem;" title="${product.name}">
+                                <h5 class="card-title text-truncate" style="max-width: 65%; font-size: 1rem;" title="${safeName}">
                                     ${product.name}
                                 </h5>
                                 <span class="badge ${badgeClass}">${alert.status}</span>
@@ -289,11 +298,10 @@
         } catch (error) { alert("Failed to delete."); }
     }
 
-    // 7. CHART LOGIC (Fixed)
+    // 7. CHART LOGIC
     async function openHistory(productId, productName) {
         if (historyModal) historyModal.show();
 
-        // Destroy old chart to prevent "Canvas is already in use" error
         if (myChart) {
             myChart.destroy();
             myChart = null;

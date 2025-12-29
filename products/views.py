@@ -10,7 +10,6 @@ from .services import get_site_product
 
 User = get_user_model()
 
-# --- 1. EXISTING ALERT VIEWSET ---
 class PriceAlertViewSet(viewsets.ModelViewSet):
     """
     Handles creating and listing Price Alerts.
@@ -19,6 +18,12 @@ class PriceAlertViewSet(viewsets.ModelViewSet):
     serializer_class = PriceAlertSerializer
 
     def get_queryset(self):
+        # Handling Schema Generation (Swagger)
+        # If drf-spectacular is generating the schema, it uses a fake view.
+        # We return an empty queryset to prevent the "AnonymousUser" error.
+        if getattr(self, 'swagger_fake_view', False):
+            return PriceAlert.objects.none()
+
         # Only return alerts belonging to the logged-in user
         return PriceAlert.objects.filter(owner=self.request.user).select_related('product')
     
@@ -62,7 +67,8 @@ class ProductViewSet(viewsets.ModelViewSet):
 
 
 # --- 3. NEW USER VIEWSET (For Admin Management) ---
-class UserSerializer(ModelSerializer):
+# Renamed from UserSerializer to AdminUserSerializer to avoid conflict ---
+class AdminUserSerializer(ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'is_staff', 'is_active']
@@ -72,5 +78,5 @@ class UserViewSet(viewsets.ModelViewSet):
     Allows Super Admin to see/manage users.
     """
     queryset = User.objects.all()
-    serializer_class = UserSerializer
+    serializer_class = AdminUserSerializer # Updated reference
     permission_classes = [permissions.IsAdminUser] # Strict security!

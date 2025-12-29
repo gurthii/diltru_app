@@ -1,4 +1,4 @@
-# Diltru - Is it truly a good deal?
+# diltru. - Is it truly a good deal?
 
 **An ecommerce site price tracker and alert app, like [Keepa](https://keepa.com/) or [CamelCamelCamel](https://camelcamelcamel.com/), where a user can check price history and get alerts on price drops of select products on a given Kenyan ecommerce site. The app initially focuses on [Jumia Kenya](https://www.jumia.co.ke/) ecommerce site.**
 

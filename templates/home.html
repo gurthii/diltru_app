@@ -1,35 +1,49 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="text-center py-5">
-    <h1 class="display-4">Track Prices. Save Money.</h1>
-    <p class="lead">The smartest way to shop on Jumia Kenya.</p>
-    
-    <div class="mt-4" id="home-actions">
-        <a href="/login/" class="btn btn-primary btn-lg">Loading...</a>
+<div class="container">
+    <div class="text-center py-5">
+        <h1 class="display-4 fw-bold">Track Prices. Save Money.</h1>
+        <p class="lead text-primary mb-4">The smartest way to shop on Jumia Kenya.</p>
+        
+        <div class="row justify-content-center mb-4">
+            <div class="col-md-8">
+                <p class="fs-5 text-muted">
+                    DilTru is a specialized price tracking tool built for Jumia Kenya. 
+                    View price history charts and get instant email alerts the moment prices drop on Jumia.
+                </p>
+            </div>
+        </div>
+        
+        <div class="mt-2" id="home-actions">
+            <a href="/login/" class="btn btn-primary btn-lg">Loading...</a>
+        </div>
     </div>
 </div>
 
 {% block extra_js %}
 <script>
     const storedToken = localStorage.getItem('diltru_token');
-    const storedUser = localStorage.getItem('diltru_username'); // <--- Get the name
+    const storedUser = localStorage.getItem('diltru_username'); 
     const actionDiv = document.getElementById('home-actions');
 
     if (storedToken) {
         // USER IS LOGGED IN
-        // We use 'storedUser' if available, otherwise fallback to 'User'
         const nameToDisplay = storedUser ? storedUser : "User";
         
         actionDiv.innerHTML = `
-            <p class="text-success fs-4">Welcome back, <strong>${nameToDisplay}</strong>!</p>
-            <a href="/dashboard/" class="btn btn-success btn-lg">Go to Dashboard</a>
+            <p class="text-success fs-4 mb-3">Welcome back, <strong>${nameToDisplay}</strong>!</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="/dashboard/" class="btn btn-success btn-lg px-5 shadow">Go to Dashboard</a>
+            </div>
         `;
     } else {
         // USER IS LOGGED OUT
         actionDiv.innerHTML = `
-            <p>Already have an account?</p>
-            <a href="/login/" class="btn btn-primary btn-lg">Login to Start</a>
+            <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                <a href="/register/" class="btn btn-primary btn-lg px-4 gap-3 shadow">Get Started</a>
+                <a href="/login/" class="btn btn-outline-secondary btn-lg px-4">Login</a>
+            </div>
         `;
     }
 </script>
