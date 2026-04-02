@@ -21,7 +21,7 @@ def job():
     print("--- ✓✓ Update Complete. Waiting for next run... ---\n")
 
 # Schedule the job
-schedule.every(6).hours.do(job) # runs every 6 hours for rate limit compliance
+schedule.every(30).minutes.do(job) # runs every 6 hours for rate limit compliance
 print("::: Price Tracker Scheduler Started. :::")
 print(":::       Press Ctrl+C to stop.      :::")
 
