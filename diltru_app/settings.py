@@ -1,7 +1,11 @@
+import logging
 import os
 from pathlib import Path
-from dotenv import load_dotenv
+
 import dj_database_url
+from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -89,34 +93,43 @@ DATABASES = {
     }
 }
 
-# Production (Render.com)
-# If running on the server, always use the internal Render DB.
+# 1. Production (Render.com deploy → Supabase PostgreSQL)
+#    Render sets the RENDER env var automatically.
+#    DATABASE_URL should point to your Supabase connection string.
 if os.getenv('RENDER'):
-    DATABASES['default'] = dj_database_url.config(conn_max_age=600)
+    DATABASES['default'] = dj_database_url.config(
+        conn_max_age=600,
+        ssl_require=True,  # Supabase requires SSL
+    )
 
-# 2. The Switch
-# When I run the scheduler locally, it forces USE_CLOUD_DB to true
-# meaning, Use Cloud DB (update prices to online db).
+# 2. Local scheduler → Supabase PostgreSQL
+#    run_scheduler.py sets USE_CLOUD_DB=True so price updates
+#    go directly to the production database.
 elif os.getenv('USE_CLOUD_DB') == 'True':
-    DATABASES['default'] = dj_database_url.parse(os.getenv('CLOUD_DATABASE_URL'))
-    print("‼️  WARNING: Connected to Production Database (Render)!")
+    DATABASES['default'] = dj_database_url.parse(
+        os.getenv('CLOUD_DATABASE_URL'),
+        conn_max_age=600,
+        ssl_require=True,
+    )
+    logger.warning("Connected to Production Database (Supabase)!")
 
-# 3. Local (Laptop Website)
-# Otherwise -> Stay on Local SQLite (Safe Mode).
+# 3. Local development → SQLite (safe default)
 else:
-    print("💻 Connected to Local Database (SQLite)")
+    logger.info("Connected to Local Database (SQLite)")
 
 """
-To effect migrations locally and to cloud
+To effect migrations locally and to cloud:
+
 Local:
-py manage.py makemigrations
-py manage.py migrate
+    py manage.py makemigrations
+    py manage.py migrate
 
-Production: temporarily switch USE_CLOUD_DB to True using PowerShell or manually edit .env; Important since scheduler runs locally to avoid 'missing column errors'
+Production (Supabase): temporarily switch USE_CLOUD_DB to True using
+PowerShell, then run migrations. Important since the scheduler runs
+locally — avoids 'missing column' errors.
 
-$env:USE_CLOUD_DB="True"; py manage.py makemigrations
-py manage.py migrate
-
+    $env:USE_CLOUD_DB="True"; py manage.py makemigrations
+    py manage.py migrate
 """
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators

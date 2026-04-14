@@ -28,3 +28,12 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email']
+
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    """
+    Used by admin-only endpoints to list / manage user accounts.
+    """
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'is_staff', 'is_active']

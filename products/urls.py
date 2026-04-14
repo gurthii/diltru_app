@@ -1,12 +1,9 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import PriceAlertViewSet, ProductViewSet
+"""
+Products app URL configuration.
 
-router = DefaultRouter()
+All product and alert API routes are registered via the project-level router
+in ``diltru_app/urls.py``.  This file exists only as a placeholder to satisfy
+Django app conventions.
+"""
 
-# We call the endpoint 'alerts' because it returns a list of alerts
-router.register(r'alerts', PriceAlertViewSet, basename='price-alert')
-router.register(r'products', ProductViewSet, basename='product')
-urlpatterns = [
-    path('', include(router.urls)),
-]
+urlpatterns = []

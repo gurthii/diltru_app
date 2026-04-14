@@ -1,61 +1,55 @@
+"""
+Web scraping service for Jumia Kenya product pages.
+"""
 import logging
-import requests
 import time
-from bs4 import BeautifulSoup as bs
-from rest_framework.exceptions import ValidationError
 
-# Logger config
+import requests
+from bs4 import BeautifulSoup as bs
+
 logger = logging.getLogger(__name__)
+
+# Browser-like headers to avoid being blocked by Jumia
+SCRAPING_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/91.0.4472.124 Safari/537.36"
+    ),
+}
+
 
 def get_site_product(url):
     """
-    Scrapes Jumia Kenya for product details.
-    Returns a dict: {'name': str, 'price': float, 'sku': str} or None.
+    Scrape a Jumia Kenya product page for basic details.
+
+    Args:
+        url: Full Jumia product URL.
+
+    Returns:
+        dict with keys ``name``, ``price``, ``sku``, ``is_available``,
+        ``image_url`` on success, or ``None`` on failure.
     """
-    # headers = {
-    #     "User-Agent": "Mozilla/5.0 (compatible; DiltruBot/1.0)",
-    #     "Accept-Language": "en-US,en;q=0.5",
-    # }
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    } # going-live
-
-    
     try:
-        # Rate limiting protection
-        time.sleep(1) 
-        response = requests.get(url, headers=headers, timeout=10)
+        # Rate-limiting protection — be polite to Jumia's servers
+        time.sleep(1)
+        response = requests.get(url, headers=SCRAPING_HEADERS, timeout=10)
 
         if response.status_code == 403:
-            logger.error(f"Access denied (403) for URL: {url}")
+            logger.error("Access denied (403) for URL: %s", url)
             return None
 
         response.raise_for_status()
         soup = bs(response.content, 'html.parser')
 
-        # 1. Extract Name
+        # --- Name ---
         name_tag = soup.find('h1')
         name = name_tag.text.strip() if name_tag else "Unknown Product"
         
-        # 1.1. Extract Image
-        # Jumia standard: <img class="-fw -fh" data-src="..." > 
-        # Sometimes it is just src, sometimes data-src (lazy loading)
-        image_url = None
-        img_tag = soup.find('img', class_="-fw") 
-        if img_tag:
-            image_url = img_tag.get('data-src') or img_tag.get('src')
-        
-        # Fallback: Try the first image in the gallery container
-        if not image_url:
-            gallery = soup.find('div', id='imgs')
-            if gallery:
-                first_img = gallery.find('img')
-                if first_img:
-                    image_url = first_img.get('data-src') or first_img.get('src')
+        # --- Image ---
+        image_url = _extract_image_url(soup)
 
-        # 2. Extract Price (Jumia specific class)
-        # Note: Jumia classes change often. If this breaks, we update this line.
+        # --- Price (Jumia-specific class — may change over time) ---
         price_tag = soup.find(class_="-b -ubpt -tal -fs24 -prxs")
         if price_tag:
             # "KSh 25,000" -> "25000"
@@ -64,8 +58,7 @@ def get_site_product(url):
         else:
             price = 0.0
    
-        # 3. Extract SKU (Critical for our new database logic)
-        # Jumia usually lists SKU in a 'span' sibling to 'SKU:'
+        # --- SKU ---
         sku_tag = soup.find("span", string="SKU")
         if sku_tag:
             sku = sku_tag.parent.get_text(strip=True).replace("SKU:", "").strip()
@@ -77,9 +70,33 @@ def get_site_product(url):
             "price": price,
             "sku": sku,
             "is_available": True,
-            "image_url" : image_url
+            "image_url": image_url,
         }
     
-    except Exception as e:
-        logger.error(f"Scrapping failed for {url}: {str(e)}")
+    except Exception:
+        logger.exception("Scraping failed for %s", url)
         return None
+
+
+def _extract_image_url(soup):
+    """
+    Try to pull the main product image from the parsed page.
+
+    Strategy:
+        1. Look for the standard Jumia full-width image tag.
+        2. Fall back to the first image inside the gallery container.
+    """
+    img_tag = soup.find('img', class_="-fw")
+    if img_tag:
+        url = img_tag.get('data-src') or img_tag.get('src')
+        if url:
+            return url
+
+    # Fallback: first image in the gallery div
+    gallery = soup.find('div', id='imgs')
+    if gallery:
+        first_img = gallery.find('img')
+        if first_img:
+            return first_img.get('data-src') or first_img.get('src')
+
+    return None
