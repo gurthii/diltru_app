@@ -5,6 +5,7 @@ certifi==2025.11.12
 cffi==2.0.0
 charset-normalizer==3.4.4
 cryptography==46.0.3
+curl_cffi==0.7.4
 dj-database-url==3.0.1
 Django==6.0
 django-anymail==14.0

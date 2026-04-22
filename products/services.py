@@ -4,7 +4,7 @@ Web scraping service for Jumia Kenya product pages.
 import logging
 import time
 
-import requests
+from curl_cffi import requests
 from bs4 import BeautifulSoup as bs
 
 logger = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ def get_site_product(url):
     try:
         # Rate-limiting protection — be polite to Jumia's servers
         time.sleep(1)
-        response = requests.get(url, headers=SCRAPING_HEADERS, timeout=10)
+        response = requests.get(url, impersonate="chrome120", timeout=10)
 
         if response.status_code == 403:
             logger.error("Access denied (403) for URL: %s", url)
