@@ -38,6 +38,8 @@ schedule.every(30).minutes.do(job)
 
 logger.info("Price Tracker Scheduler started. Press Ctrl+C to stop.")
 
+job()
+
 while True:
     schedule.run_pending()
     time.sleep(1)
